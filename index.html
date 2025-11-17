@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="nl" xmlns:mso="urn:schemas-microsoft-com:office:office" xmlns:msdt="uuid:C2F41010-65B3-11d1-A29F-00AA00C14882">
+<head>
+  <meta charset="utf-8" />
+  <title>Leaflet met GRB, BESIX en GPS-locatie</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <style>
+    #map { height: 100vh; margin: 0; }
+  </style>
+
+<!--[if gte mso 9]><xml>
+<mso:CustomDocumentProperties>
+<mso:_ApprovalStatus msdt:dt="string">0</mso:_ApprovalStatus>
+<mso:_ApprovalAssignedTo msdt:dt="string"></mso:_ApprovalAssignedTo>
+<mso:_ApprovalRespondedBy msdt:dt="string"></mso:_ApprovalRespondedBy>
+<mso:_ApprovalSentBy msdt:dt="string"></mso:_ApprovalSentBy>
+</mso:CustomDocumentProperties>
+</xml><![endif]-->
+</head>
+<body>
+  <div id="map"></div>
+
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <script>
+    const map = L.map('map').setView([51.05, 3.72], 13); // Start in Gent
+
+    // GRB basiskaart grijs via WMTS als XYZ-laag
+    const grbWMTS = L.tileLayer('https://geo.api.vlaanderen.be/GRB/wmts?SERVICE=WMTS&VERSION=1.0.0&REQUEST=GetTile&LAYER=grb_bsk_grijs&STYLE=&FORMAT=image/png&TILEMATRIXSET=GoogleMapsVL&TILEMATRIX={z}&TILEROW={y}&TILECOL={x}', {
+      maxZoom: 21,
+      attribution: '© Digitaal Vlaanderen'
+    }).addTo(map);
+
+    // OpenStreetMap als alternatieve basemap
+    const osm = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      maxZoom: 25,
+      attribution: '© OpenStreetMap-bijdragers'
+    });
+
+    // BESIX WMS-lijnen
+    const besixLine = L.tileLayer.wms('https://geoserver.besix.com/geoserver/besix/wms', {
+      layers: 'besix:GIS_B6C_AB_LINE',
+      format: 'image/png',
+      transparent: true,
+      version: '1.3.0',
+      attribution: '© BESIX',
+      maxZoom: 18
+    });
+
+    // BESIX WMS-punten
+    const besixPoint = L.tileLayer.wms('https://geoserver.besix.com/geoserver/besix/wms', {
+      layers: 'GIS_B6C_AB_POINT_WYRE_MRO',
+      format: 'image/png',
+      transparent: true,
+      version: '1.3.0',
+      attribution: '© BESIX',
+      maxZoom: 18
+    });
+
+    // Laagcontrole
+    const baseMaps = {
+      "GRB Basiskaart Grijs": grbWMTS,
+      "OpenStreetMap": osm
+    };
+
+    const overlayMaps = {
+      "BESIX Lijnen": besixLine,
+      "BESIX Punten": besixPoint
+    };
+
+    L.control.layers(baseMaps, overlayMaps).addTo(map);
+    L.control.zoom({ position: 'topright' }).addTo(map);
+
+    // Automatische GPS-locatie
+    map.locate({ setView: true, maxZoom: 16 });
+
+    map.on('locationfound', function (e) {
+      L.marker(e.latlng)
+        .addTo(map)
+        .bindPopup("Je huidige locatie")
+        .openPopup();
+    });
+
+    map.on('locationerror', function () {
+      alert("Locatie niet gevonden of geweigerd.");
+    });
+  </script>
+</body>
+</html>
