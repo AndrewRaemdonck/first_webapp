@@ -1,0 +1,46 @@
+
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Inloggen – BESIX Connect</title>
+  <style>
+    :root{ --accent:#3b82f6; --bg:#0f172a; --card:#111827; --muted:#9ca3af; }
+    *{box-sizing:border-box}
+    html,body{height:100%}
+    body{margin:0;font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial;color:#e5e7eb;background:linear-gradient(135deg,#0f172a 0%,#1f2937 100%)}
+    .wrap{min-height:100%;display:grid;place-items:center;padding:24px}
+    .card{width:min(440px,92vw);background:rgba(17,24,39,.9);border:1px solid rgba(255,255,255,.06);border-radius:16px;box-shadow:0 10px 30px rgba(0,0,0,.4);padding:28px}
+    .brand{display:flex;align-items:center;gap:10px;margin-bottom:8px}
+    .brand .dot{width:12px;height:12px;border-radius:50%;background:var(--accent)}
+    h1{margin:6px 0 8px;font-size:22px}
+    p{margin:0 0 18px;color:var(--muted)}
+    .btn{display:flex;align-items:center;gap:10px;justify-content:center;width:100%;padding:12px 14px;border-radius:10px;border:1px solid rgba(255,255,255,.14);background:#2563eb;color:#fff;text-decoration:none;font-weight:600}
+    .btn:hover{background:#1d4ed8}
+    .small{margin-top:14px;color:#9ca3af;font-size:12px;text-align:center}
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="card">
+      <div class="brand"><span class="dot"></span><strong>BESIX Connect</strong></div>
+      <h1>Inloggen</h1>
+      <p>Meld aan met je Microsoft‑account om de webapp te gebruiken.</p>
+      <a class="btn" href="/.auth/login/aad?post_login_redirect_uri=/">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12h18M13 5l7 7-7 7"/></svg>
+        Inloggen met Microsoft
+      </a>
+      <div class="small">Toegang is beperkt tot geautoriseerde gebruikers.</div>
+    </div>
+  </div>
+  <script>
+    // Als de gebruiker al ingelogd is, meteen door naar de app
+    fetch('/.auth/me').then(r=>r.json()).then(d=>{
+      if (Array.isArray(d) && d.length>0) {
+        window.location.replace('/');
+      }
+    }).catch(()=>{});
+  </script>
+</body>
+</html>

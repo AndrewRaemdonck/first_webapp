@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html lang="nl" xmlns:mso="urn:schemas-microsoft-com:office:office" xmlns:msdt="uuid:C2F41010-65B3-11d1-A29F-00AA00C14882">
+<head>
+  <meta charset="utf-8" />
+  <title>Leaflet met GRB, BESIX, GPS-locatie, adreszoekfunctie, toolbar en print</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <!-- Leaflet CSS -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <!-- Geocoder CSS -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet-control-geocoder/dist/Control.Geocoder.css" />
+  <!-- EasyButton CSS -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet-easybutton@2.4.0/src/easy-button.css" />
+
+  <style>
+    #map { height: 98vh; margin: 0; }
+  </style>
+
+<!--[if gte mso 9]><xml>
+<mso:CustomDocumentProperties>
+<mso:_ApprovalStatus msdt:dt="string">0</mso:_ApprovalStatus>
+<mso:_ApprovalAssignedTo msdt:dt="string"></mso:_ApprovalAssignedTo>
+<mso:_ApprovalRespondedBy msdt:dt="string"></mso:_ApprovalRespondedBy>
+<mso:_ApprovalSentBy msdt:dt="string"></mso:_ApprovalSentBy>
+</mso:CustomDocumentProperties>
+</xml><![endif]-->
+</head>
+<body>
+  <div id="map"></div>
+
+  <!-- Leaflet JS -->
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <!-- Geocoder JS -->
+  <script src="https://unpkg.com/leaflet-control-geocoder/dist/Control.Geocoder.js"></script>
+  <!-- EasyButton JS -->
+  <script src="https://cdn.jsdelivr.net/npm/leaflet-easybutton@2.4.0/src/easy-button.js"></script>
+  <!-- html2canvas for screenshot -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+
+  <script>
+    // Init map
+    const map = L.map('map').setView([51.05, 4.05], 9); // Start in Gent
+
+    // GRB basiskaart grijs via WMTS als XYZ-laag
+    const grbWMTS = L.tileLayer('https://geo.api.vlaanderen.be/GRB/wmts?SERVICE=WMTS&VERSION=1.0.0&REQUEST=GetTile&LAYER=grb_bsk_grijs&STYLE=&FORMAT=image/png&TILEMATRIXSET=GoogleMapsVL&TILEMATRIX={z}&TILEROW={y}&TILECOL={x}', {
+      maxZoom: 25,
+      attribution: ''
+    }).addTo(map);
+
+    // OpenStreetMap als alternatieve basemap
+    const osm = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      maxZoom: 25,
+      attribution: ''
+    });
+
+
+// ✅ BESIX WMS-lijnen (met CQL_FILTER op WERFNR)
+// BESIX WMS-lijnen
+
+const params = new URLSearchParams(window.location.search);
+const werfnr = params.get('werfnr') || '';  // fallback
+
+// string vs numeriek:
+const isNumericWerfnr = /^\d+$/.test(werfnr);
+
+const cqlSingle = werfnr
+  ? (isNumericWerfnr ? `WERFNR=${werfnr}` : `WERFNR='${werfnr.replaceAll("'", "''")}'`)
+  : 'INCLUDE';
+const cqlSingle2 = werfnr
+  ? (isNumericWerfnr ? `WERFnr=${werfnr}` : `WERFnr='${werfnr.replaceAll("'", "''")}'`)
+  : 'INCLUDE';
+
+
+
+const besixLine = L.tileLayer.wms('https://geoserver.besix.com/geoserver/besix/wms', {
+  layers: 'besix:GIS_B6C_AB_LINE,besix:GIS_B6C_AB_POINT',
+  format: 'image/png',
+  transparent: true,
+  version: '1.3.0',
+  attribution: '© BESIX',
+  CQL_FILTER: `${cqlSingle};${cqlSingle}`,
+  tiled: false,
+  time: Date.now(),
+  maxZoom: 25
+}).addTo(map);
+
+const besixZones = L.tileLayer.wms('https://geoserver.besix.com/geoserver/besix/wms', {
+  layers: 'besix:PROJECTZONES',
+  format: 'image/png',
+  transparent: true,
+  version: '1.3.0',
+  attribution: '© BESIX',
+  CQL_FILTER: `${cqlSingle2}`,
+  tiled: false,
+  time: Date.now(),
+  maxZoom: 25
+}).addTo(map);
+
+const p4alDesign = L.tileLayer.wms('https://geo.cas-vos.be/geoserver/power4all/ows', {
+  layers: 'design',
+  format: 'image/png',
+  transparent: true,
+  version: '1.3.0',
+  tiled: false,                  // minder tile-caching
+  time: Date.now(),              // cache-buster
+  attribution: '© BESIX',
+  maxZoom: 25
+}).addTo(map);
+
+
+    // POWER4ALL Asbuilt
+    const p4alAsbuilt = L.tileLayer.wms('https://geo.cas-vos.be/geoserver/power4all/ows', {
+      layers: 'asbuiltv2',
+      format: 'image/png',
+      transparent: true,
+      version: '1.3.0',
+      attribution: '© BESIX',
+      maxZoom: 25,
+    }).addTo(map);
+
+
+    // Laagcontrole
+    const baseMaps = {
+      "GRB Basiskaart Grijs": grbWMTS,
+      "OpenStreetMap": osm
+    };
+
+    const overlayMaps = {
+      "BESIX Projectzones": besixZones,
+      "BESIX AS-Built": besixLine,
+      "POWER4ALL ONTW": p4alDesign,
+      "POWER4ALL ASB": p4alAsbuilt
+    };
+
+    L.control.layers(baseMaps, overlayMaps).addTo(map);
+    L.control.zoom({ position: 'topright' }).addTo(map);
+
+    // =========================
+    // Functies voor Access-integratie
+    // =========================
+    async function zoomToAddress(address) {
+      if (!address || address.trim() === '') { return; }
+      const url = `https://nominatim.openstreetmap.org/search?format=json&limit=1&countrycodes=be&accept-language=nl&q=${encodeURIComponent(address)}`;
+      try {
+        const resp = await fetch(url, { headers: { 'Accept': 'application/json' } });
+        const data = await resp.json();
+        if (Array.isArray(data) && data.length > 0) {
+          const { lat, lon, display_name } = data[0];
+          const latf = parseFloat(lat), lonf = parseFloat(lon);
+          map.setView([latf, lonf], 16);
+          L.marker([latf, lonf]).addTo(map).bindPopup(display_name).openPopup();
+        } else {
+          alert('Adres niet gevonden. Vlaanderen wordt getoond.');
+          map.fitBounds(vlaanderenBounds, { padding: [20, 20] });
+          if (map.getZoom() < minDesiredZoom) map.setZoom(minDesiredZoom);
+        }
+      } catch (err) {
+        console.error(err);
+        alert('Geocoding fout. Vlaanderen wordt getoond.');
+        map.fitBounds(vlaanderenBounds, { padding: [20, 20] });
+        if (map.getZoom() < minDesiredZoom) map.setZoom(minDesiredZoom);
+      }
+    }
+
+    // Exporteer globale functies zodat VBA/Access ze kan aanroepen:
+    window.zoomToAddress = zoomToAddress;
+    window.zoomToLatLon = function(lat, lon, zoom) {
+      const z = typeof zoom === 'number' ? zoom : 16;
+      map.setView([lat, lon], z);
+      L.marker([lat, lon]).addTo(map).bindPopup('Adres').openPopup();
+    };
+
+    // =========================
+    // Querystring lezen: ?straat=...&gemeente=...
+    // =========================
+    (function initFromQuery() {
+      const params = new URLSearchParams(window.location.search);
+      const straat = params.get('straat');
+      const gemeente = params.get('gemeente');
+      if (straat || gemeente) {
+        const addr = [straat, gemeente].filter(Boolean).join(', ');
+        zoomToAddress(addr);
+      }
+    })();
+
+
+    // ✅ Adreszoekfunctie toevoegen
+    L.Control.geocoder({
+      defaultMarkGeocode: true
+    }).addTo(map);
+
+    // ✅ Toolbar knoppen
+
+
+    // ✅ Print-knop
+   L.easyButton('fa-print', function(){
+    html2canvas(document.querySelector("#map"), {
+        useCORS: true, // Belangrijk voor externe tiles
+        logging: false,
+        scale: 2 // Hogere resolutie
+    }).then(canvas => {
+        const imgData = canvas.toDataURL("image/png");
+        const printWindow = window.open('', '_blank');
+        printWindow.document.write('<html><head><title>Print Kaart</title></head><body style="margin:0;text-align:center;">');
+        printWindow.document.write('<img src="' + imgData + '" style="width:210mm;max-width:100%;height:auto;">'); // A4 breedte
+        printWindow.document.write('</body></html>');
+        printWindow.document.close();
+
+        // Wacht tot afbeelding geladen is
+        printWindow.onload = function() {
+            printWindow.focus();
+            printWindow.print();
+            printWindow.close();
+        };
+    });
+}, 'Print kaart').addTo(map);
+  </script>
+</body>
+</html>
