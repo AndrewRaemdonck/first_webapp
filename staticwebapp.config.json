@@ -1,31 +1,24 @@
+
 {
   "navigationFallback": {
-    "rewrite": "/index.html"
+    "rewrite": "/login"
   },
   "routes": [
     {
       "route": "/login",
-      "allowedRoles": [
-        "anonymous"
-      ]
+      "allowedRoles": ["anonymous"]
     },
     {
       "route": "/assets/*",
-      "allowedRoles": [
-        "anonymous"
-      ]
+      "allowedRoles": ["anonymous"]
     },
     {
       "route": "/favicon.ico",
-      "allowedRoles": [
-        "anonymous"
-      ]
+      "allowedRoles": ["anonymous"]
     },
     {
       "route": "/*",
-      "allowedRoles": [
-        "authenticated"
-      ]
+      "allowedRoles": ["authenticated"]
     }
   ],
   "responseOverrides": {
