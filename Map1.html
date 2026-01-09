@@ -39,7 +39,7 @@
 
   <script>
     // Init map
-    const map = L.map('map').setView([51.05, 4.05], 9); // Start in Gent
+    const map = L.map('map').setView([51.05, 4.05], 13); // Start in Gent
 
     // GRB basiskaart grijs via WMTS als XYZ-laag
     const grbWMTS = L.tileLayer('https://geo.api.vlaanderen.be/GRB/wmts?SERVICE=WMTS&VERSION=1.0.0&REQUEST=GetTile&LAYER=grb_bsk_grijs&STYLE=&FORMAT=image/png&TILEMATRIXSET=GoogleMapsVL&TILEMATRIX={z}&TILEROW={y}&TILECOL={x}', {
@@ -216,4 +216,5 @@ const p4alDesign = L.tileLayer.wms('https://geo.cas-vos.be/geoserver/power4all/o
 }, 'Print kaart').addTo(map);
   </script>
 </body>
+
 </html>
