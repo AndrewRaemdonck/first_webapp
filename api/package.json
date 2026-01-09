@@ -1,0 +1,12 @@
+{
+  "name": "swa-api",
+  "version": "1.0.0",
+  "private": true,
+  "engines": {
+    "node": ">=18"
+  },
+  "dependencies": {
+    "mssql": "^10.0.2",
+    "@azure/identity": "^4.0.0"
+  }
+}

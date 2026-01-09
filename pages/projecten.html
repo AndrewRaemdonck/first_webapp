@@ -1,69 +1,82 @@
+
 <!DOCTYPE html>
 <html lang="nl">
 <head>
-  <meta charset="UTF-8">
-  <title>Projecten</title>
-  <style>
-    body {
-      font-family: system-ui, sans-serif;
-      margin: 2rem;
-      background: #f7f7f7;
-    }
-    .container {
-      max-width: 600px;
-      margin: 0 auto;
-      background: white;
-      padding: 1.5rem;
-      border-radius: 8px;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-    }
-    ul {
-      list-style: none;
-      padding: 0;
-    }
-    li {
-      padding: 0.6rem 1rem;
-      margin-bottom: 0.4rem;
-      border-radius: 4px;
-      background-color: #e9eef5;
-      border-left: 4px solid #4a6fa5;
-      cursor: pointer;
-      font-weight: 500;
-    }
-    li:hover {
-      background-color: #dce4ef;
-    }
-  </style>
-
-  <script>
-    function openProject(projectnr) {
-      // Zoek de iframe in de parent pagina
-      const frame = window.parent.document.getElementById("contentFrame");
-
-      if (frame) {
-        frame.src = "Map1.html?werfnr=" + projectnr;
-      } else {
-        console.error("iframe met id 'contentFrame' niet gevonden");
-      }
-    }
-  </script>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Projectenlijst</title>
+<style>
+  body{margin:0;font-family:system-ui;padding:16px}
+  table{border-collapse:collapse;width:100%}
+  th,td{border:1px solid #e5e7eb;padding:8px;text-align:left}
+  th{background:#f9fafb;position:sticky;top:0}
+  tr{cursor:pointer}
+  tr:hover{background:#f3f4f6}
+  .search{margin-bottom:12px}
+</style>
 </head>
-
 <body>
-  <div class="container">
-    <h1>Projecten</h1>
-    <ul>
-      <li onclick="openProject('BC0300401')">BC0300401</li>
-      <li onclick="openProject('BC0300402')">BC0300402</li>
-      <li onclick="openProject('BC0300403')">BC0300403</li>
-      <li onclick="openProject('BC0300404')">BC0300404</li>
-      <li onclick="openProject('BC0300405')">BC0300405</li>
-      <li onclick="openProject('BC0300406')">BC0300406</li>
-      <li onclick="openProject('BC0300407')">BC0300407</li>
-      <li onclick="openProject('BC0300408')">BC0300408</li>
-      <li onclick="openProject('BC0300409')">BC0300409</li>
-      <li onclick="openProject('BC0300410')">BC0300410</li>
-    </ul>
-  </div>
+  <h2>Projecten (laatste 180 dagen)</h2>
+  <input class="search" id="q" type="search" placeholder="Zoeken op gemeente, straat of werfnr…"/>
+  <div id="msg">Laden…</div>
+  <table id="tbl" style="display:none">
+    <thead>
+      <tr>
+        <th>Werfnr</th>
+        <th>Gemeente</th>
+        <th>Straat</th>
+        <th>Status/Einddatum</th>
+        <th>Projectleider</th>
+        <th>Werfleider</th>
+      </tr>
+    </thead>
+    <tbody id="rows"></tbody>
+  </table>
+
+<script>
+let data=[];
+async function load(){
+  try{
+    const r=await fetch('/api/projects');
+    if(!r.ok) throw new Error('API '+r.status);
+    data=await r.json();
+    render(data);
+    document.getElementById('msg').style.display='none';
+    document.getElementById('tbl').style.display='table';
+  }catch(e){
+    document.getElementById('msg').textContent='Kon projecten niet laden: '+e.message;
+    console.error(e);
+  }
+}
+function render(list){
+  const q=document.getElementById('q').value.toLowerCase();
+  const rows=list.filter(p=>{
+    return !q || (p.Gemeente||'').toLowerCase().includes(q) || (p.Straat||'').toLowerCase().includes(q) || String(p.werfnr||'').includes(q);
+  }).map(p=>`
+    <tr data-werfnr="${p.werfnr||''}">
+      <td>${p.werfnr||''}</td>
+      <td>${p.Gemeente||''}</td>
+      <td>${p.Straat||''}</td>
+      <td>${p.Einddatum? new Date(p.Einddatum).toLocaleDateString() : ''}</td>
+      <td>${p.Projectleider||''}</td>
+      <td>${p.Werfleider||''}</td>
+    </tr>`).join('');
+  document.getElementById('rows').innerHTML=rows;
+}
+
+document.addEventListener('click', (e)=>{
+  const tr=e.target.closest('tr[data-werfnr]');
+  if(!tr) return; const werfnr=tr.getAttribute('data-werfnr');
+  // Vraag de parent (index.html) om naar Map1 te navigeren met parameter
+  if(window.top && window.top!==window){
+    window.top.postMessage({type:'goto-map', werfnr}, '*');
+  } else {
+    // fallback als standalone
+    window.location.href = '../Map1.html?werfnr='+encodeURIComponent(werfnr);
+  }
+});
+
+document.getElementById('q').addEventListener('input',()=>render(data));
+load();
+</script>
 </body>
 </html>
