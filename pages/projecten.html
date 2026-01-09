@@ -38,12 +38,12 @@
   <script>
     function openProject(projectnr) {
       // Zoek de iframe in de parent pagina
-      const frame = window.parent.document.getElementById("mapframe");
+      const frame = window.parent.document.getElementById("contentFrame");
 
       if (frame) {
         frame.src = "Map1.html?werfnr=" + projectnr;
       } else {
-        console.error("iframe met id 'mapframe' niet gevonden");
+        console.error("iframe met id 'contentFrame' niet gevonden");
       }
     }
   </script>
