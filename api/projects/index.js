@@ -1,25 +1,31 @@
-
 const sql = require('mssql');
 const { DefaultAzureCredential } = require('@azure/identity');
 
 module.exports = async function (context, req) {
-  const server   = process.env.SQL_SERVER;      // e.g. myserver.database.windows.net
-  const database = process.env.SQL_DATABASE;    // e.g. besix_connect
-  const user     = process.env.SQL_USER;        // only for SQL auth
-  const password = process.env.SQL_PASSWORD;    // only for SQL auth
-  const authMode = (process.env.SQL_AUTH_MODE || 'aad').toLowerCase(); // 'aad' | 'sql'
+  const server   = process.env.SQL_SERVER;
+  const database = process.env.SQL_DATABASE;
+  const user     = process.env.SQL_USER;
+  const password = process.env.SQL_PASSWORD;
+  const authMode = (process.env.SQL_AUTH_MODE || 'aad').toLowerCase();
 
-  /** Build connection config */
-  let config = { server, database, options: { encrypt: true } };
+  let config = {
+    server,
+    database,
+    port: 1433,
+    options: {
+      encrypt: true,
+      trustServerCertificate: false
+    }
+  };
 
   try {
     if (authMode === 'sql' && user && password) {
       config.user = user;
       config.password = password;
     } else {
-      // Default: Managed Identity / AAD
       const credential = new DefaultAzureCredential();
       const token = await credential.getToken('https://database.windows.net/.default');
+
       config.authentication = {
         type: 'azure-active-directory-access-token',
         options: { token: token.token }
@@ -27,6 +33,7 @@ module.exports = async function (context, req) {
     }
 
     const pool = await sql.connect(config);
+
     const result = await pool.request().query(`
       SELECT Id, Gemeente, Straat, Netwerknummer, Infragebied, Piloot, werfnr, bestek, postcode, Werfleider, Projectleider, Einddatum, InspireID
       FROM dbo.ProjectenLite
@@ -38,6 +45,7 @@ module.exports = async function (context, req) {
       headers: { 'Content-Type': 'application/json' },
       body: result.recordset
     };
+
   } catch (err) {
     context.log.error(err);
     context.res = { status: 500, body: `API error: ${err.message}` };
