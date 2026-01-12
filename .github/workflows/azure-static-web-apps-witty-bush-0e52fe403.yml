@@ -28,10 +28,12 @@ jobs:
       - name: Install OIDC Client from Core Package
         run: npm install @actions/core@1.6.0 @actions/http-client
 
-      - name: Get Id Token
-        uses: actions/github-script@v6
-        id: id coredemo = require('@actions/core')
-            return await coredemo.getIDToken()
+      - name:@v6
+        id: idtoken
+        with:
+          script: |
+            const coredemo = require('@actions/core');
+            return await coredemo.getIDToken();
           result-encoding: string
 
       - name: Build And Deploy
@@ -60,15 +62,5 @@ jobs:
       - name: Close Pull Request
         id: closepullrequest
         uses: Azure/static-web-apps-deploy@v1
-        ✔️ Je workflow zal **succeed**  
-### ✔️ Azure SWA zal automatisch “api” herkennen  
-### ✔️ Jouw API wordt eindelijk gedeployed  
-### ✔️ `/api/projects` zal JSON teruggeven  
-### ✔️ Je “Unexpected token `<`” fout verdwijnt voorgoed
-
----
-
-# 🎯 Laatste check
-
-Wil je dat ik de laatste GitHub Actions-run nakijk als je hem uitvoert?  
-Upload gewoon het **eerste stuk van de logs** van de “Build And Deploy” stap.
+        with:
+          action: "close"
