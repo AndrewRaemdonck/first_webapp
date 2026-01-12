@@ -12,7 +12,7 @@ on:
 
 jobs:
   build_and_deploy_job:
-    # Let op: gebruik hier '&&', niet HTML-escaped '&amp;&amp;'
+    # Gebruik hier '&&' (geen HTML &amp;&amp;)
     if: github.event_name == 'push' || (github.event_name == 'pull_request' && github.event.action != 'closed')
     runs-on: ubuntu-latest
     name: Build and Deploy Job
@@ -42,21 +42,21 @@ jobs:
         id: builddeploy
         uses: Azure/static-web-apps-deploy@v1
         with:
-          # ✅ Juiste key + jouw secret naam
+          # ✅ Token uit je repo-secrets
           azure_static_web_apps_api_token: ${{ secrets.AZURE_STATIC_WEB_APPS_API_TOKEN_WITTY_BUSH_0E52FE403 }}
           action: "upload"
 
           # 🌐 FRONTEND (statische HTML) – niet bouwen
-          app_location: "/"      # jouw index.html staat in root
-          output_location: ""    # geen build output folder
+          app_location: "/"       # index.html in root
+          output_location: ""     # geen build output
           skip_app_build: true
-          app_build_command: ""  # expliciet niets
+          app_build_command: ""   # expliciet niets
 
-          # 🔧 API (Functions)
+          # 🔧 API (Azure Functions in /api)
           api_location: "api"
           skip_api_build: false
 
-          # OIDC token doorgeven (optioneel voor data-API e.d.)
+          # (optioneel) OIDC-id-token doorgeven
           github_id_token: ${{ steps.idtoken.outputs.result }}
 
   close_pull_request_job:
@@ -70,3 +70,4 @@ jobs:
         uses: Azure/static-web-apps-deploy@v1
         with:
           action: "close"
+``
