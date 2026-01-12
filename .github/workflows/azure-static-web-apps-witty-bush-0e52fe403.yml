@@ -12,7 +12,6 @@ on:
 
 jobs:
   build_and_deploy_job:
-    # Gebruik hier '&&' (geen HTML &amp;&amp;)
     if: github.event_name == 'push' || (github.event_name == 'pull_request' && github.event.action != 'closed')
     runs-on: ubuntu-latest
     name: Build and Deploy Job
@@ -31,10 +30,7 @@ jobs:
 
       - name: Get Id Token
         uses: actions/github-script@v6
-        id: idtoken
-        with:
-          script: |
-            const coredemo = require('@actions/core')
+        id: id coredemo = require('@actions/core')
             return await coredemo.getIDToken()
           result-encoding: string
 
@@ -42,21 +38,17 @@ jobs:
         id: builddeploy
         uses: Azure/static-web-apps-deploy@v1
         with:
-          # ✅ Token uit je repo-secrets
           azure_static_web_apps_api_token: ${{ secrets.AZURE_STATIC_WEB_APPS_API_TOKEN_WITTY_BUSH_0E52FE403 }}
           action: "upload"
 
-          # 🌐 FRONTEND (statische HTML) – niet bouwen
-          app_location: "/"       # index.html in root
-          output_location: ""     # geen build output
+          app_location: "/"
+          output_location: ""
           skip_app_build: true
-          app_build_command: ""   # expliciet niets
+          app_build_command: ""
 
-          # 🔧 API (Azure Functions in /api)
           api_location: "api"
           skip_api_build: false
 
-          # (optioneel) OIDC-id-token doorgeven
           github_id_token: ${{ steps.idtoken.outputs.result }}
 
   close_pull_request_job:
@@ -68,6 +60,15 @@ jobs:
       - name: Close Pull Request
         id: closepullrequest
         uses: Azure/static-web-apps-deploy@v1
-        with:
-          action: "close"
-``
+        ✔️ Je workflow zal **succeed**  
+### ✔️ Azure SWA zal automatisch “api” herkennen  
+### ✔️ Jouw API wordt eindelijk gedeployed  
+### ✔️ `/api/projects` zal JSON teruggeven  
+### ✔️ Je “Unexpected token `<`” fout verdwijnt voorgoed
+
+---
+
+# 🎯 Laatste check
+
+Wil je dat ik de laatste GitHub Actions-run nakijk als je hem uitvoert?  
+Upload gewoon het **eerste stuk van de logs** van de “Build And Deploy” stap.
